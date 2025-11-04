@@ -1,7 +1,19 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    domains: [
+      "img.freepik.com",
+      "www.samatak.com",
+      "www.talab.org",
+      "i1.delgarm.com",
+      "tiktarh.com",
+      "i.pinimg.com",
+      "rgb360.ir",
+      "plus.unsplash.com",
+      "images.unsplash.com" // ← دامنه‌ی جدید اضافه شد
+    ],
+  },
 };
 
 export default nextConfig;
