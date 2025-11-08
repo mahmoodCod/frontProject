@@ -41,12 +41,10 @@ export default function Header() {
 
   const navItems = [
     { name: "صفحه اصلی", icon: FiHome, href: "/" },
-    { name: "دسته‌بندی قهوه", icon: FiCoffee, href: "/CoffeeCategoryPage" },
-    { name: "تخفیف‌های ویژه", icon: FiTag, href: "/SpecialDiscountsPage" },
-    { name: "دانه‌های خاص", icon: FiStar, href: "/premium-coffee" },
-    { name: "تجهیزات حرفه‌ای", icon: FiTool, href: "/equipment" },
-    { name: "آموزش دم‌آوری", icon: FiBook, href: "/tutorials" },
-    { name: "پیگیری سفارش", icon: FiTruck, href: "/track-order" },
+    { name: "دسته‌بندی کالا ها", icon: FiCoffee, href: "/CoffeeCategoryPage" },
+    { name: "تخفیف‌های امروز", icon: FiTag, href: "/SpecialDiscountsPage" },
+    { name: "خرید های باارزش", icon: FiStar, href: "/premium-coffee" },
+    { name: "فروشنده باش", icon: FiTool, href: "/equipment" },
   ];
 
   const mobileAdditionalItems = [
@@ -87,14 +85,14 @@ export default function Header() {
               transition={{ duration: 0.6 }}
               className="bg-gradient-to-br from-amber-600 to-amber-700 text-white w-12 h-12 flex items-center justify-center rounded-2xl font-bold text-xl shadow-lg shadow-amber-600/25"
             >
-              ق
+              آی
             </motion.div>
             <div className="flex flex-col">
-              <span className="text-xl font-bold text-gray-800 font-[var(--font-yekan)]">
-                قهوه‌مارکت
+              <span className="text-lg font-bold text-gray-800 font-[var(--font-yekan)] leading-tight">
+                آی‌کسب
               </span>
-              <span className="text-xs text-amber-600 font-[var(--font-yekan)]">
-                Coffee Market
+              <span className="text-xs text-amber-600 font-[var(--font-yekan)] font-medium tracking-tight">
+                فروش با دستیار هوش مصنوعی
               </span>
             </div>
           </motion.div>
@@ -112,7 +110,7 @@ export default function Header() {
               whileFocus={{ scale: 1.02 }}
               type="text"
               placeholder="چه قهوه‌ای دنبالشی؟ مثلا: اسپرسو، فرنچ پرس..."
-              className="w-full border-2 border-amber-200 rounded-2xl py-3 px-5 pr-12 text-gray-700 focus:outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 bg-white/80 backdrop-blur-sm shadow-lg"
+              className="w-full border-2 border-amber-200 rounded-2xl py-3 px-5 pr-12 text-gray-700 focus:outline-none focus:border-amber-500 focus:ring-4 focus:ring-amber-500/20 bg-white/80 backdrop-blur-sm shadow-lg font-[var(--font-yekan)]"
             />
             <motion.button
               whileHover={{ scale: 1.1 }}
@@ -209,14 +207,14 @@ export default function Header() {
         </div>
       </motion.div>
 
-      {/* --- Bottom Navigation (Desktop) --- */}
+      {/* --- Bottom Navigation (Desktop) - راست‌چین شده --- */}
       <motion.nav
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.3 }}
-        className="hidden md:flex justify-center items-center px-8 py-3 text-sm font-medium bg-gradient-to-r from-amber-50/50 to-orange-50/50 backdrop-blur-sm border-b border-amber-200/50"
+        className="hidden md:flex justify-start items-center px-8 py-3 text-sm font-medium bg-gradient-to-r from-amber-50/50 to-orange-50/50 backdrop-blur-sm border-b border-amber-200/50"
       >
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-8 ml-auto">
           {navItems.map((item) => (
             <motion.div key={item.name} whileHover={{ y: -2 }} transition={{ duration: 0.2 }}>
               <Link
@@ -262,9 +260,14 @@ export default function Header() {
                 <Link href="/" onClick={() => setIsMenuOpen(false)}>
                   <div className="flex items-center gap-3">
                     <div className="bg-gradient-to-br from-amber-600 to-amber-700 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold">
-                      ق
+                      آی
                     </div>
-                    <span className="text-lg font-bold text-gray-800 font-[var(--font-yekan)]">قهوه‌مارکت</span>
+                    <div className="flex flex-col">
+                      <span className="text-lg font-bold text-gray-800 font-[var(--font-yekan)]">آی‌کسب</span>
+                      <span className="text-xs text-amber-600 font-[var(--font-yekan)] font-medium">
+                        فروش با دستیار هوش مصنوعی
+                      </span>
+                    </div>
                   </div>
                 </Link>
                 <motion.button
@@ -282,7 +285,7 @@ export default function Header() {
                 <input
                   type="text"
                   placeholder="از من بپرس ..."
-                  className="w-full border-2 border-amber-200 rounded-2xl py-3 px-4 pr-12 text-gray-700 focus:outline-none focus:border-amber-500 bg-white shadow-lg"
+                  className="w-full border-2 border-amber-200 rounded-2xl py-3 px-4 pr-12 text-gray-700 focus:outline-none focus:border-amber-500 bg-white shadow-lg font-[var(--font-yekan)]"
                 />
                 <FiSearch className="absolute left-10 top-7 text-amber-600" size={20} />
               </div>
