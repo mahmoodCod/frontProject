@@ -44,11 +44,11 @@ export default function Header() {
     { name: "دسته‌بندی کالا ها", icon: FiCoffee, href: "/CoffeeCategoryPage" },
     { name: "تخفیف‌های امروز", icon: FiTag, href: "/SpecialDiscountsPage" },
     { name: "خرید های باارزش", icon: FiStar, href: "/ValuablePurchasesPage" },
-    { name: "فروشنده باش", icon: FiTool, href: "/equipment" },
+    { name: "فروشنده باش", icon: FiTool, href: "/BecomeSellerPage" },
   ];
 
   const mobileAdditionalItems = [
-    { name: "فروشنده شوید", icon: FiUser, href: "/become-seller" },
+    { name: "فروشنده شوید", icon: FiUser, href: "/BecomeSellerPage" },
     { name: "پشتیبانی", icon: FiHelpCircle, href: "/support" },
     { name: "درباره ما", icon: FiHelpCircle, href: "/about" },
     { name: "تماس با ما", icon: FiHelpCircle, href: "/contact" },
