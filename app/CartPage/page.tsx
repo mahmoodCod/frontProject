@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
-import { FiTrash2, FiShoppingCart, FiCheckCircle, FiTruck, FiShield, FiGift, FiClock, FiPackage, FiHeart, FiAward, FiCreditCard, FiRefreshCw, FiHeadphones } from "react-icons/fi";
-import { useCart } from "@/contaxt/CartContext";
+import { FiTrash2, FiShoppingCart, FiCheckCircle, FiTruck, FiShield, FiGift, FiClock, FiPackage, FiHeart, FiAward, FiCreditCard, FiRefreshCw, FiHeadphones, FiChevronRight, FiChevronLeft } from "react-icons/fi";
+import { useCart, CartProduct } from "@/contaxt/CartContext";
 
 type Product = {
-  id: string;
+  id: number;
   name: string;
   price: number;
   originalPrice?: number;
@@ -27,24 +27,8 @@ type Product = {
   features?: string[];
 };
 
-type CartItem = {
-  id: string;
-  name: string;
-  price: number;
-  image: string;
-  quantity: number;
-};
-
-type UseCartReturn = {
-  cart: CartItem[];
-  removeFromCart: (id: string) => void;
-  updateQuantity: (id: string, qty: number) => void;
-  clearCart: () => void;
-  addToCart?: (product: Product) => void;
-};
-
-export default function CartPage(): JSX.Element {
-  const cartContext = useCart() as UseCartReturn;
+export default function CartPage(): React.ReactElement {
+  const cartContext = useCart();
   const { cart, removeFromCart, updateQuantity, clearCart, addToCart } = cartContext;
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -53,6 +37,10 @@ export default function CartPage(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState<string>("");
   const [discount, setDiscount] = useState<number>(0);
+
+  // Refs for scrollable containers
+  const alsoBoughtRef = useRef<HTMLDivElement>(null);
+  const recentlyViewedRef = useRef<HTMLDivElement>(null);
 
   // Fetch products from your API
   useEffect(() => {
@@ -79,7 +67,7 @@ export default function CartPage(): JSX.Element {
     };
   }, []);
 
-  // Build recently viewed (you can replace with real recently-viewed logic)
+  // Build recently viewed
   useEffect(() => {
     if (products.length > 0) {
       const sample = [...products].sort(() => 0.5 - Math.random()).slice(0, 8);
@@ -87,7 +75,34 @@ export default function CartPage(): JSX.Element {
     }
   }, [products]);
 
-  const totalPrice = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  // Scroll functions for Also Bought section
+  const scrollAlsoBoughtLeft = () => {
+    if (alsoBoughtRef.current) {
+      alsoBoughtRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+    }
+  };
+
+  const scrollAlsoBoughtRight = () => {
+    if (alsoBoughtRef.current) {
+      alsoBoughtRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+    }
+  };
+
+  // Scroll functions for Recently Viewed section
+  const scrollRecentlyViewedLeft = () => {
+    if (recentlyViewedRef.current) {
+      recentlyViewedRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRecentlyViewedRight = () => {
+    if (recentlyViewedRef.current) {
+      recentlyViewedRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+    }
+  };
+
+  // Convert price from string to number for calculations
+  const totalPrice = cart.reduce((acc, item) => acc + (typeof item.price === 'string' ? parseFloat(item.price) : item.price) * item.quantity, 0);
   const shippingCost = totalPrice > 500000 ? 0 : 30000;
   const discountAmount = (totalPrice * discount) / 100;
   const finalPrice = totalPrice + shippingCost - discountAmount;
@@ -104,11 +119,16 @@ export default function CartPage(): JSX.Element {
     }
   };
 
-  // Helper: format number to Persian thousands (fa-IR) but fallback to default
   const formatCurrency = (n: number) =>
     n.toLocaleString("fa-IR") + " تومان";
 
-  // RTL container (Persian)
+  const convertToCartProduct = (product: Product): Omit<CartProduct, "quantity"> => ({
+    id: product.id,
+    name: product.name,
+    price: product.price.toString(),
+    image: product.image
+  });
+
   return (
     <div dir="rtl" className="min-h-screen bg-gradient-to-b from-amber-50 to-amber-100 pt-54 font-[var(--font-yekan)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -168,69 +188,92 @@ export default function CartPage(): JSX.Element {
                   <p className="text-amber-600 text-lg">می‌توانید از محصولات زیر برای افزودن به سبد خرید استفاده کنید</p>
                 </div>
               ) : (
-                cart.map((item) => (
-                  <div
-                    key={item.id}
-                    className="grid grid-cols-1 md:grid-cols-[150px_1fr_120px] items-center gap-6 bg-white p-6 rounded-2xl border border-amber-200 shadow-sm hover:shadow-md transition"
-                  >
-                    {/* LEFT: total price per item */}
-                    <div className="order-1 md:order-none flex flex-col items-start">
-                      <span className="text-xl font-bold text-amber-900">
-                        {formatCurrency(item.price * item.quantity)}
-                      </span>
-                      <span className="text-xs text-amber-500 mt-1">جمع آیتم</span>
-                    </div>
-
-                    {/* MIDDLE: product info, qty controls */}
-                    <div className="order-3 md:order-none flex flex-col justify-between h-full text-right">
-                      <h3 className="font-bold text-gray-800 text-lg mb-2">{item.name}</h3>
-                      <div className="flex items-center gap-3 mb-4">
-                        <span className="text-sm text-amber-700">قیمت واحد: {formatCurrency(item.price)}</span>
-                      </div>
-
-                      <div className="flex items-center gap-3 mt-auto">
-                        <button
-                          onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
-                          className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center font-bold text-lg"
-                          aria-label="decrement"
-                        >
-                          -
-                        </button>
-                        <span className="font-bold text-lg min-w-10 text-center bg-amber-50 py-1 rounded-md">
-                          {item.quantity}
+                cart.map((item) => {
+                  const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+                  return (
+                    <div
+                      key={item.id}
+                      className="grid grid-cols-1 md:grid-cols-[150px_1fr_120px] items-center gap-6 bg-white p-6 rounded-2xl border border-amber-200 shadow-sm hover:shadow-md transition"
+                    >
+                      {/* LEFT: total price per item */}
+                      <div className="order-1 md:order-none flex flex-col items-start">
+                        <span className="text-xl font-bold text-amber-900">
+                          {formatCurrency(itemPrice * item.quantity)}
                         </span>
-                        <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center font-bold text-lg"
-                          aria-label="increment"
-                        >
-                          +
-                        </button>
+                        <span className="text-xs text-amber-500 mt-1">جمع آیتم</span>
+                      </div>
 
-                        <button
-                          onClick={() => removeFromCart(item.id)}
-                          className="mr-auto text-red-500 hover:text-red-600 transition p-2 hover:bg-red-50 rounded-lg"
-                          aria-label="remove"
-                        >
-                          <FiTrash2 size={20} />
-                        </button>
+                      {/* MIDDLE: product info, qty controls */}
+                      <div className="order-3 md:order-none flex flex-col justify-between h-full text-right">
+                        <h3 className="font-bold text-gray-800 text-lg mb-2">{item.name}</h3>
+                        <div className="flex items-center gap-3 mb-4">
+                          <span className="text-sm text-amber-700">قیمت واحد: {formatCurrency(itemPrice)}</span>
+                        </div>
+
+                        <div className="flex items-center gap-3 mt-auto">
+                          <button
+                            onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                            className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center font-bold text-lg"
+                            aria-label="decrement"
+                          >
+                            -
+                          </button>
+                          <span className="font-bold text-lg min-w-10 text-center bg-amber-50 py-1 rounded-md">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center font-bold text-lg"
+                            aria-label="increment"
+                          >
+                            +
+                          </button>
+
+                          <button
+                            onClick={() => removeFromCart(item.id)}
+                            className="mr-auto text-red-500 hover:text-red-600 transition p-2 hover:bg-red-50 rounded-lg"
+                            aria-label="remove"
+                          >
+                            <FiTrash2 size={20} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* RIGHT: image */}
+                      <div className="order-2 md:order-none relative w-full h-32 rounded-xl overflow-hidden self-center">
+                        <Image src={item.image} alt={item.name} fill className="object-cover" />
                       </div>
                     </div>
-
-                    {/* RIGHT: image */}
-                    <div className="order-2 md:order-none relative w-full h-32 rounded-xl overflow-hidden self-center">
-                      <Image src={item.image} alt={item.name} fill className="object-cover" />
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
             {/* Also Bought Section - Full width container with single row horizontal scrolling */}
-            <section className="w-full bg-white p-6 rounded-2xl border border-amber-200 shadow-sm">
-              <div className="flex items-center gap-3 mb-6">
-                <FiGift className="text-amber-600 flex-shrink-0" size={24} />
-                <h2 className="text-2xl font-bold text-amber-900">خریداران این محصولات، این کالاها را هم خریده‌اند</h2>
+            <section className="w-full bg-white p-6 rounded-2xl border border-amber-200 shadow-sm relative">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <FiGift className="text-amber-600 flex-shrink-0" size={24} />
+                  <h2 className="text-2xl font-bold text-amber-900">خریداران این محصولات، این کالاها را هم خریده‌اند</h2>
+                </div>
+                
+                {/* Navigation buttons for Also Bought */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={scrollAlsoBoughtLeft}
+                    className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center"
+                    aria-label="Scroll left"
+                  >
+                    <FiChevronRight size={20} />
+                  </button>
+                  <button
+                    onClick={scrollAlsoBoughtRight}
+                    className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center"
+                    aria-label="Scroll right"
+                  >
+                    <FiChevronLeft size={20} />
+                  </button>
+                </div>
               </div>
               
               {loading && (
@@ -241,7 +284,10 @@ export default function CartPage(): JSX.Element {
               )}
               
               {/* Single row with horizontal scrolling */}
-              <div className="w-full flex flex-row gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-amber-300 scrollbar-track-amber-100">
+              <div 
+                ref={alsoBoughtRef}
+                className="w-full flex flex-row gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-amber-300 scrollbar-track-amber-100"
+              >
                 {products.slice(0, 8).map((p) => (
                   <div key={p.id} className="flex-none w-72 bg-amber-50 rounded-2xl p-5 border border-amber-100 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col">
                     <div className="relative w-full h-48 rounded-xl overflow-hidden mb-4">
@@ -255,7 +301,7 @@ export default function CartPage(): JSX.Element {
                       )}
                     </div>
                     <button
-                      onClick={() => addToCart?.(p)}
+                      onClick={() => addToCart?.(convertToCartProduct(p))}
                       className="w-full bg-amber-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-amber-700 transition text-base"
                     >
                       <FiShoppingCart />
@@ -267,14 +313,37 @@ export default function CartPage(): JSX.Element {
             </section>
 
             {/* Recently Viewed Section - Full width container with single row horizontal scrolling */}
-            <section className="w-full bg-white p-6 rounded-2xl border border-amber-200 shadow-sm">
-              <div className="flex items-center gap-3 mb-6">
-                <FiClock className="text-amber-600 flex-shrink-0" size={24} />
-                <h2 className="text-2xl font-bold text-amber-900">کالاهایی که اخیراً مشاهده کرده‌اید</h2>
+            <section className="w-full bg-white p-6 rounded-2xl border border-amber-200 shadow-sm relative">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <FiClock className="text-amber-600 flex-shrink-0" size={24} />
+                  <h2 className="text-2xl font-bold text-amber-900">کالاهایی که اخیراً مشاهده کرده‌اید</h2>
+                </div>
+                
+                {/* Navigation buttons for Recently Viewed */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={scrollRecentlyViewedLeft}
+                    className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center"
+                    aria-label="Scroll left"
+                  >
+                    <FiChevronRight size={20} />
+                  </button>
+                  <button
+                    onClick={scrollRecentlyViewedRight}
+                    className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center"
+                    aria-label="Scroll right"
+                  >
+                    <FiChevronLeft size={20} />
+                  </button>
+                </div>
               </div>
               
               {/* Single row with horizontal scrolling */}
-              <div className="w-full flex flex-row gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-amber-300 scrollbar-track-amber-100">
+              <div 
+                ref={recentlyViewedRef}
+                className="w-full flex flex-row gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-amber-300 scrollbar-track-amber-100"
+              >
                 {recentlyViewed.map((p) => (
                   <div key={p.id} className="flex-none w-72 bg-amber-50 rounded-2xl p-5 border border-amber-100 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col">
                     <div className="relative w-full h-48 rounded-xl overflow-hidden mb-4">
@@ -288,7 +357,7 @@ export default function CartPage(): JSX.Element {
                       )}
                     </div>
                     <button
-                      onClick={() => addToCart?.(p)}
+                      onClick={() => addToCart?.(convertToCartProduct(p))}
                       className="w-full bg-amber-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-amber-700 transition text-base"
                     >
                       <FiShoppingCart />
@@ -488,6 +557,7 @@ export default function CartPage(): JSX.Element {
             </div>
           </div>
         </div>
+        <br /> <br /> <br />
       </div>
     </div>
   );
