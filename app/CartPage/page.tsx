@@ -154,7 +154,7 @@ export default function CartPage(): React.ReactElement {
           </div>
         </div>
 
-        {/* STEP INDICATOR */}
+        {/* STEP INDICATOR - FIXED */}
         <div className="flex items-center justify-between mb-8 text-amber-800">
           {[
             { id: 1, label: "سبد خرید" },
@@ -167,6 +167,7 @@ export default function CartPage(): React.ReactElement {
                 {idx === 0 ? <FiCheckCircle /> : step.id}
               </div>
               <span className="mt-2 text-sm font-medium text-center px-1">{step.label}</span>
+              {/* FIXED: Changed idx < 3 to idx < 4 to include all connections */}
               {idx < 3 && (
                 <div className="absolute top-4 left-[60%] right-[-20%]">
                   <div className="h-[2px] bg-amber-200 w-full" />
@@ -253,124 +254,129 @@ export default function CartPage(): React.ReactElement {
               )}
             </div>
 
-            {/* Also Bought Section - Full width container with single row horizontal scrolling */}
-            <section className="w-full bg-white p-6 rounded-2xl border border-amber-200 shadow-sm relative">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <FiGift className="text-amber-600 flex-shrink-0" size={24} />
-                  <h2 className="text-2xl font-bold text-amber-900">خریداران این محصولات، این کالاها را هم خریده‌اند</h2>
-                </div>
-                
-                {/* Navigation buttons for Also Bought */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={scrollAlsoBoughtLeft}
-                    className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center"
-                    aria-label="Scroll left"
-                  >
-                    <FiChevronRight size={20} />
-                  </button>
-                  <button
-                    onClick={scrollAlsoBoughtRight}
-                    className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center"
-                    aria-label="Scroll right"
-                  >
-                    <FiChevronLeft size={20} />
-                  </button>
-                </div>
-              </div>
-              
-              {loading && (
-                <div className="text-amber-600 text-center py-8 text-lg">در حال بارگذاری...</div>
-              )}
-              {error && (
-                <div className="text-red-500 text-center py-8 text-lg">{error}</div>
-              )}
-              
-              {/* Single row with horizontal scrolling */}
-              <div 
-                ref={alsoBoughtRef}
-                className="w-full flex flex-row gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-amber-300 scrollbar-track-amber-100"
-              >
-                {products.slice(0, 8).map((p) => (
-                  <div key={p.id} className="flex-none w-72 bg-amber-50 rounded-2xl p-5 border border-amber-100 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col">
-                    <div className="relative w-full h-48 rounded-xl overflow-hidden mb-4">
-                      <Image src={p.image} alt={p.name} fill className="object-cover hover:scale-105 transition duration-300" />
+            {/* Only show these sections when cart is NOT empty */}
+            {cart.length > 0 && (
+              <>
+                {/* Also Bought Section - Full width container with single row horizontal scrolling */}
+                <section className="w-full bg-white p-6 rounded-2xl border border-amber-200 shadow-sm relative">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <FiGift className="text-amber-600 flex-shrink-0" size={24} />
+                      <h2 className="text-2xl font-bold text-amber-900">خریداران این محصولات، این کالاها را هم خریده‌اند</h2>
                     </div>
-                    <h3 className="font-bold text-base text-amber-900 line-clamp-2 flex-grow mb-3">{p.name}</h3>
-                    <div className="flex items-center justify-between mb-4">
-                      <p className="text-amber-700 text-lg font-bold">{formatCurrency(p.price)}</p>
-                      {p.originalPrice && p.originalPrice > p.price && (
-                        <p className="text-gray-500 text-sm line-through">{formatCurrency(p.originalPrice)}</p>
-                      )}
+                    
+                    {/* Navigation buttons for Also Bought */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={scrollAlsoBoughtLeft}
+                        className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center"
+                        aria-label="Scroll left"
+                      >
+                        <FiChevronRight size={20} />
+                      </button>
+                      <button
+                        onClick={scrollAlsoBoughtRight}
+                        className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center"
+                        aria-label="Scroll right"
+                      >
+                        <FiChevronLeft size={20} />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => addToCart?.(convertToCartProduct(p))}
-                      className="w-full bg-amber-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-amber-700 transition text-base"
-                    >
-                      <FiShoppingCart />
-                      افزودن به سبد خرید
-                    </button>
                   </div>
-                ))}
-              </div>
-            </section>
+                  
+                  {loading && (
+                    <div className="text-amber-600 text-center py-8 text-lg">در حال بارگذاری...</div>
+                  )}
+                  {error && (
+                    <div className="text-red-500 text-center py-8 text-lg">{error}</div>
+                  )}
+                  
+                  {/* Single row with horizontal scrolling */}
+                  <div 
+                    ref={alsoBoughtRef}
+                    className="w-full flex flex-row gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-amber-300 scrollbar-track-amber-100"
+                  >
+                    {products.slice(0, 8).map((p) => (
+                      <div key={p.id} className="flex-none w-72 bg-amber-50 rounded-2xl p-5 border border-amber-100 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col">
+                        <div className="relative w-full h-48 rounded-xl overflow-hidden mb-4">
+                          <Image src={p.image} alt={p.name} fill className="object-cover hover:scale-105 transition duration-300" />
+                        </div>
+                        <h3 className="font-bold text-base text-amber-900 line-clamp-2 flex-grow mb-3">{p.name}</h3>
+                        <div className="flex items-center justify-between mb-4">
+                          <p className="text-amber-700 text-lg font-bold">{formatCurrency(p.price)}</p>
+                          {p.originalPrice && p.originalPrice > p.price && (
+                            <p className="text-gray-500 text-sm line-through">{formatCurrency(p.originalPrice)}</p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => addToCart?.(convertToCartProduct(p))}
+                          className="w-full bg-amber-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-amber-700 transition text-base"
+                        >
+                          <FiShoppingCart />
+                          افزودن به سبد خرید
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </section>
 
-            {/* Recently Viewed Section - Full width container with single row horizontal scrolling */}
-            <section className="w-full bg-white p-6 rounded-2xl border border-amber-200 shadow-sm relative">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <FiClock className="text-amber-600 flex-shrink-0" size={24} />
-                  <h2 className="text-2xl font-bold text-amber-900">کالاهایی که اخیراً مشاهده کرده‌اید</h2>
-                </div>
-                
-                {/* Navigation buttons for Recently Viewed */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={scrollRecentlyViewedLeft}
-                    className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center"
-                    aria-label="Scroll left"
-                  >
-                    <FiChevronRight size={20} />
-                  </button>
-                  <button
-                    onClick={scrollRecentlyViewedRight}
-                    className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center"
-                    aria-label="Scroll right"
-                  >
-                    <FiChevronLeft size={20} />
-                  </button>
-                </div>
-              </div>
-              
-              {/* Single row with horizontal scrolling */}
-              <div 
-                ref={recentlyViewedRef}
-                className="w-full flex flex-row gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-amber-300 scrollbar-track-amber-100"
-              >
-                {recentlyViewed.map((p) => (
-                  <div key={p.id} className="flex-none w-72 bg-amber-50 rounded-2xl p-5 border border-amber-100 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col">
-                    <div className="relative w-full h-48 rounded-xl overflow-hidden mb-4">
-                      <Image src={p.image} alt={p.name} fill className="object-cover hover:scale-105 transition duration-300" />
+                {/* Recently Viewed Section - Full width container with single row horizontal scrolling */}
+                <section className="w-full bg-white p-6 rounded-2xl border border-amber-200 shadow-sm relative">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <FiClock className="text-amber-600 flex-shrink-0" size={24} />
+                      <h2 className="text-2xl font-bold text-amber-900">کالاهایی که اخیراً مشاهده کرده‌اید</h2>
                     </div>
-                    <h3 className="font-bold text-base text-amber-900 line-clamp-2 flex-grow mb-3">{p.name}</h3>
-                    <div className="flex items-center justify-between mb-4">
-                      <p className="text-amber-700 text-lg font-bold">{formatCurrency(p.price)}</p>
-                      {p.originalPrice && p.originalPrice > p.price && (
-                        <p className="text-gray-500 text-sm line-through">{formatCurrency(p.originalPrice)}</p>
-                      )}
+                    
+                    {/* Navigation buttons for Recently Viewed */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={scrollRecentlyViewedLeft}
+                        className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center"
+                        aria-label="Scroll left"
+                      >
+                        <FiChevronRight size={20} />
+                      </button>
+                      <button
+                        onClick={scrollRecentlyViewedRight}
+                        className="w-10 h-10 bg-amber-100 text-amber-700 rounded-lg hover:bg-amber-200 transition flex items-center justify-center"
+                        aria-label="Scroll right"
+                      >
+                        <FiChevronLeft size={20} />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => addToCart?.(convertToCartProduct(p))}
-                      className="w-full bg-amber-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-amber-700 transition text-base"
-                    >
-                      <FiShoppingCart />
-                      افزودن به سبد خرید
-                    </button>
                   </div>
-                ))}
-              </div>
-            </section>
+                  
+                  {/* Single row with horizontal scrolling */}
+                  <div 
+                    ref={recentlyViewedRef}
+                    className="w-full flex flex-row gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-amber-300 scrollbar-track-amber-100"
+                  >
+                    {recentlyViewed.map((p) => (
+                      <div key={p.id} className="flex-none w-72 bg-amber-50 rounded-2xl p-5 border border-amber-100 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col">
+                        <div className="relative w-full h-48 rounded-xl overflow-hidden mb-4">
+                          <Image src={p.image} alt={p.name} fill className="object-cover hover:scale-105 transition duration-300" />
+                        </div>
+                        <h3 className="font-bold text-base text-amber-900 line-clamp-2 flex-grow mb-3">{p.name}</h3>
+                        <div className="flex items-center justify-between mb-4">
+                          <p className="text-amber-700 text-lg font-bold">{formatCurrency(p.price)}</p>
+                          {p.originalPrice && p.originalPrice > p.price && (
+                            <p className="text-gray-500 text-sm line-through">{formatCurrency(p.originalPrice)}</p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => addToCart?.(convertToCartProduct(p))}
+                          className="w-full bg-amber-600 text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-amber-700 transition text-base"
+                        >
+                          <FiShoppingCart />
+                          افزودن به سبد خرید
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </>
+            )}
           </div>
 
           {/* RIGHT: Enhanced Order Summary (sidebar) */}
