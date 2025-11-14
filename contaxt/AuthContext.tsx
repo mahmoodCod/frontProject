@@ -2,12 +2,15 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-interface User {
+const USER_STORAGE_KEY = "user";
+const TOKEN_STORAGE_KEY = "token";
+
+export interface User {
   _id: string;
   username: string;
   phone: string;
   roles: string[];
-  addresses: Array<{
+  addresses?: Array<{
     _id: string;
     name: string;
     province: string;
@@ -25,7 +28,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (userData: User) => void;
+  login: (userData: User, token?: string) => void;
   logout: () => void;
   checkAuth: () => boolean;
   updateUser: (userData: Partial<User>) => void;
@@ -53,8 +56,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     const checkUserAuth = () => {
       try {
-        const storedUser = localStorage.getItem("currentUser");
-        const token = localStorage.getItem("authToken");
+        let storedUser = localStorage.getItem(USER_STORAGE_KEY);
+        let token = localStorage.getItem(TOKEN_STORAGE_KEY);
+
+        if (!storedUser || !token) {
+          const legacyUser = localStorage.getItem("currentUser");
+          const legacyToken = localStorage.getItem("authToken");
+
+          if (legacyUser && legacyToken) {
+            storedUser = legacyUser;
+            token = legacyToken;
+            localStorage.setItem(USER_STORAGE_KEY, legacyUser);
+            localStorage.setItem(TOKEN_STORAGE_KEY, legacyToken);
+            localStorage.removeItem("currentUser");
+            localStorage.removeItem("authToken");
+          }
+        }
 
         if (storedUser && token) {
           const userData: User = JSON.parse(storedUser);
@@ -63,8 +80,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       } catch (error) {
         console.error("Error checking authentication:", error);
         // Clear corrupted data
-        localStorage.removeItem("currentUser");
-        localStorage.removeItem("authToken");
+        localStorage.removeItem(USER_STORAGE_KEY);
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
       } finally {
         setIsLoading(false);
       }
@@ -73,29 +90,30 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     checkUserAuth();
   }, []);
 
-  const login = (userData: User) => {
+  const login = (userData: User, token?: string) => {
     setUser(userData);
-    localStorage.setItem("currentUser", JSON.stringify(userData));
-    localStorage.setItem("authToken", "mock-jwt-token"); // In real app, this comes from API
+    localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
+    const tokenToPersist = token ?? "mock-jwt-token"; // In real app, this comes from API
+    localStorage.setItem(TOKEN_STORAGE_KEY, tokenToPersist);
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("authToken");
+    localStorage.removeItem(USER_STORAGE_KEY);
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
     // Optional: Redirect to home page
     window.location.href = "/";
   };
 
   const checkAuth = (): boolean => {
-    return !!user && !!localStorage.getItem("authToken");
+    return !!user && !!localStorage.getItem(TOKEN_STORAGE_KEY);
   };
 
   const updateUser = (userData: Partial<User>) => {
     if (user) {
       const updatedUser = { ...user, ...userData };
       setUser(updatedUser);
-      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
     }
   };
 

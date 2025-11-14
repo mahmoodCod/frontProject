@@ -1,11 +1,121 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { FiCoffee, FiSmartphone, FiMessageCircle, FiClock } from "react-icons/fi";
 import { useAuth } from "@/contaxt/AuthContext";
+import type { User } from "@/contaxt/AuthContext";
 import { useRouter } from "next/navigation";
+
+const AUTH_API_BASE_URL = process.env.NEXT_PUBLIC_AUTH_API_BASE_URL ?? "http://localhost:4000/api/v1/auth";
+
+// Helper to log API URL for debugging
+if (typeof window !== "undefined") {
+  console.log("🔗 API Base URL:", AUTH_API_BASE_URL);
+}
+
+type ApiResponse<T> = {
+  status: number;
+  success: boolean;
+  data?: T;
+  error?: string;
+};
+
+type SendOtpResponse = {
+  message?: string;
+};
+
+type VerifyOtpResponse = {
+  message?: string;
+  token: string;
+  user: User;
+};
+
+interface ApiError extends Error {
+  status?: number;
+}
+
+const sanitizePhoneNumber = (phone: string) => phone.replace(/\s+/g, "");
+
+const isValidPhoneNumber = (phone: string) => /^(?:\+98|0098|0)?9\d{9}$/.test(phone);
+
+const extractCountdownSeconds = (message?: string) => {
+  if (!message) return undefined;
+  const match = message.match(/(\d{1,2}):(\d{2})/);
+  if (!match) return undefined;
+  const mins = Number(match[1]);
+  const secs = Number(match[2]);
+  if (Number.isNaN(mins) || Number.isNaN(secs)) return undefined;
+  return mins * 60 + secs;
+};
+
+const createApiError = (message: string, status?: number): ApiError => {
+  const error = Object.assign(new Error(message), { status }) as ApiError;
+  return error;
+};
+
+const resolveErrorMessage = (error: unknown) => {
+  const defaultMessage = "خطا در برقراری ارتباط با سرور";
+
+  // Handle network errors (fetch fails before getting response)
+  if (error instanceof TypeError) {
+    const errorMessage = error.message.toLowerCase();
+    if (errorMessage.includes("failed to fetch") || errorMessage.includes("networkerror") || errorMessage.includes("network error")) {
+      return "سرور در دسترس نیست. لطفاً مطمئن شوید که سرور بک‌اند در حال اجرا است (http://localhost:4000)";
+    }
+    return "مشکل اتصال به اینترنت. لطفاً اتصال خود را بررسی کنید";
+  }
+
+  if (error && typeof error === "object" && "status" in error) {
+    const apiError = error as ApiError;
+    const fallback = apiError.message || defaultMessage;
+    const normalizedFallback = fallback.toLowerCase();
+
+    if (normalizedFallback.includes("phone number is not valid")) {
+      return "فرمت شماره موبایل معتبر نیست";
+    }
+
+    if (normalizedFallback.includes("otp code is not valid")) {
+      return "کد تأیید معتبر نیست";
+    }
+
+    if (normalizedFallback.includes("wrong or expired otp") || 
+        normalizedFallback.includes("wrong or expired otp !!") ||
+        normalizedFallback === "wrong or expired otp") {
+      return "کد تأیید اشتباه یا منقضی شده است";
+    }
+
+    if (normalizedFallback.includes("otp code is required")) {
+      return "وارد کردن کد تأیید الزامی است";
+    }
+
+    switch (apiError.status) {
+      case 400:
+        return fallback || "درخواست نامعتبر است";
+      case 401:
+        return "لطفاً دوباره وارد شوید";
+      case 403:
+        return "این شماره موبایل مسدود شده است";
+      case 404:
+        return "اطلاعات کاربر یافت نشد";
+      case 500:
+        return "خطای داخلی سرور، لطفاً دوباره تلاش کنید";
+      default:
+        return fallback || defaultMessage;
+    }
+  }
+
+  if (error instanceof Error) {
+    const errorMessage = error.message.toLowerCase();
+    if (errorMessage.includes("network") || errorMessage.includes("fetch")) {
+      return "سرور در دسترس نیست. لطفاً مطمئن شوید که سرور بک‌اند در حال اجرا است";
+    }
+    return error.message || defaultMessage;
+  }
+
+  return defaultMessage;
+};
 
 export default function LoginPage() {
   const [formData, setFormData] = useState({
@@ -16,6 +126,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [infoMessage, setInfoMessage] = useState("");
 
   const { login } = useAuth();
   const router = useRouter();
@@ -36,31 +147,52 @@ export default function LoginPage() {
       return;
     }
 
-    if (formData.phone.length !== 11) {
-      setError("شماره موبایل باید ۱۱ رقم باشد");
+    const normalizedPhone = sanitizePhoneNumber(formData.phone);
+
+    if (!isValidPhoneNumber(normalizedPhone)) {
+      setError("فرمت شماره موبایل معتبر نیست");
       return;
     }
 
     setIsLoading(true);
     setError("");
+    setInfoMessage("");
 
     try {
-      // Simulate sending OTP - in real implementation, this will call your backend API
-      console.log("Sending OTP to:", formData.phone);
-      
-      // Start countdown for 2 minutes
-      setCountdown(120);
-      setOtpSent(true);
-      
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // In real implementation, you would call your OTP sending API here
-      // await fetch('/api/send-otp', { method: 'POST', body: JSON.stringify({ phone: formData.phone }) });
+      const response = await fetch(`${AUTH_API_BASE_URL}/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ phone: normalizedPhone }),
+      });
 
+      // Check if response is ok before trying to parse JSON
+      let data: ApiResponse<SendOtpResponse>;
+      try {
+        data = (await response.json()) as ApiResponse<SendOtpResponse>;
+      } catch {
+        // If response is not JSON, it's likely a network/server error
+        throw createApiError(
+          `سرور پاسخ معتبری ارسال نکرد (کد وضعیت: ${response.status})`,
+          response.status
+        );
+      }
+
+      if (!response.ok || !data.success) {
+        throw createApiError(
+          data.error || "خطا در ارسال کد تأیید",
+          data.status ?? response.status
+        );
+      }
+
+      const nextCountdown = extractCountdownSeconds(data.data?.message) ?? 120;
+      setCountdown(nextCountdown);
+      setOtpSent(true);
+      setInfoMessage(data.data?.message ?? "کد تأیید ارسال شد");
     } catch (err) {
-      console.error('OTP sending error:', err);
-      setError("خطا در ارسال کد تأیید");
+      console.error("OTP sending error:", err);
+      setError(resolveErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
@@ -68,6 +200,7 @@ export default function LoginPage() {
 
   const handleResendOtp = () => {
     if (countdown > 0) return;
+    setInfoMessage("");
     handleSendOtp();
   };
 
@@ -84,80 +217,85 @@ export default function LoginPage() {
       return;
     }
 
-    if (formData.otp.length !== 6) {
-      setError("کد تأیید باید ۶ رقم باشد");
+    const normalizedPhone = sanitizePhoneNumber(formData.phone);
+
+    if (!isValidPhoneNumber(normalizedPhone)) {
+      setError("فرمت شماره موبایل معتبر نیست");
+      return;
+    }
+
+    const otpCode = formData.otp.trim();
+
+    if (!/^\d{6}$/.test(otpCode)) {
+      setError("کد تأیید باید ۶ رقم عددی باشد");
       return;
     }
 
     setIsLoading(true);
     setError("");
+    setInfoMessage("");
 
     try {
-      // In real implementation, this would verify OTP with your backend
-      // For now, we'll simulate successful OTP verification
-      
-      // Get all users from API to check if user exists
-      const response = await fetch('https://6810ff2827f2fdac24139dec.mockapi.io/user');
-      
-      if (!response.ok) {
-        throw new Error('خطا در ارتباط با سرور');
+      const response = await fetch(`${AUTH_API_BASE_URL}/verify`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ phone: normalizedPhone, otp: otpCode }),
+      });
+
+      // Check if response is ok before trying to parse JSON
+      let data: ApiResponse<VerifyOtpResponse>;
+      try {
+        data = (await response.json()) as ApiResponse<VerifyOtpResponse>;
+      } catch {
+        // If response is not JSON, it's likely a network/server error
+        throw createApiError(
+          `سرور پاسخ معتبری ارسال نکرد (کد وضعیت: ${response.status})`,
+          response.status
+        );
       }
 
-      const users = await response.json();
-      
-      // Find user by phone number
-      let user = users.find((u: any) => u.phone === formData.phone);
-      
-      if (!user) {
-        // If user doesn't exist, create a new one automatically
-        console.log("Creating new user for phone:", formData.phone);
+      if (!response.ok || !data.success || !data.data) {
+        // Log the error for debugging
+        console.log("API Error Response:", {
+          status: data.status ?? response.status,
+          error: data.error,
+          success: data.success,
+        });
         
-        // In real implementation, this would call your registration API
-        // For now, we'll create a mock user object
-        user = {
-          id: Date.now().toString(),
-          phone: formData.phone,
-          name: `کاربر ${formData.phone}`,
-          createdAt: new Date().toISOString(),
-          // Add any other required user fields
-        };
-        
-        // In real implementation, you would save the user to your database
-        // await fetch('https://6810ff2827f2fdac24139dec.mockapi.io/user', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify(user)
-        // });
-        
-        console.log("New user created:", user);
-      } else {
-        console.log("Existing user found:", user);
+        throw createApiError(
+          data.error || "خطا در تأیید کد",
+          data.status ?? response.status
+        );
       }
 
-      // ✅ Store user data in AuthContext
-      login(user);
-      
-      // ✅ Redirect to dashboard page
-      router.push('/dashboard');
-      
+      const { token, user } = data.data;
+
+      if (!token || !user) {
+        throw createApiError("توکن معتبر از سرور دریافت نشد", data.status ?? response.status);
+      }
+
+      login(user, token);
+      router.push("/DashboardPage");
     } catch (err) {
-      console.error('Login error:', err);
-      setError("خطا در ارتباط با سرور");
+      console.error("Login error:", err);
+      setError(resolveErrorMessage(err));
     } finally {
       setIsLoading(false);
     }
   };
 
   // Countdown timer effect
-  useState(() => {
-    let interval: NodeJS.Timeout;
-    if (countdown > 0) {
-      interval = setInterval(() => {
-        setCountdown(prev => prev - 1);
-      }, 1000);
-    }
+  useEffect(() => {
+    if (!otpSent || countdown <= 0) return;
+
+    const interval = setInterval(() => {
+      setCountdown(prev => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
     return () => clearInterval(interval);
-  });
+  }, [otpSent, countdown]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -227,6 +365,15 @@ export default function LoginPage() {
                     className="mb-4 bg-red-50 border border-red-200 rounded-xl p-4"
                   >
                     <p className="text-red-700 text-sm font-[var(--font-yekan)] text-center">{error}</p>
+                  </motion.div>
+                )}
+                {infoMessage && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mb-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4"
+                  >
+                    <p className="text-emerald-700 text-sm font-[var(--font-yekan)] text-center">{infoMessage}</p>
                   </motion.div>
                 )}
 
