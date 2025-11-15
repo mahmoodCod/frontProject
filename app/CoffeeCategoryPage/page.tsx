@@ -419,7 +419,7 @@ export default function CoffeeCategoryPage() {
               transition={{ duration: 0.6 }}
               className="flex flex-wrap gap-3 mb-6"
             >
-              {['پربازدیدترین', 'پرفروش‌ترین', 'گران‌ترین', 'ارزان‌ترین'].map((filter, index) => (
+              {['توصیه شده ها', 'تخفیف دارها'].map((filter, index) => (
                 <motion.button
                   key={filter}
                   initial={{ opacity: 0, scale: 0.8 }}
@@ -524,7 +524,7 @@ export default function CoffeeCategoryPage() {
                         <div className="flex flex-col gap-1">
                           {/* Original Price (if discounted) */}
                           {product.originalPrice && (
-                            <span className="text-sm text-gray-500 line-through font-[var(--font-yekan)] text-left">
+                            <span className="text-sm text-gray-500 line-through font-[var(--font-yekan)]">
                               {formatProductPrice(product.originalPrice)}
                             </span>
                           )}
@@ -548,7 +548,7 @@ export default function CoffeeCategoryPage() {
                             }}
                           >
                             <FiMessageCircle size={14} />
-                            <span>مشاوره هوشمند (فوری)</span>
+                            <span>مشاوره سریع (هوشمند)</span>
                           </motion.button>
 
                           {/* Buy Button */}
