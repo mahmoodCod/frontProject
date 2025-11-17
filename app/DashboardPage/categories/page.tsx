@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   FiGrid,
-  FiBarChart3,
+  FiBarChart,
   FiUsers,
   FiShoppingCart,
   FiTrendingUp,
@@ -21,6 +21,7 @@ import {
 import { useAuth } from "@/contaxt/AuthContext";
 import { useRouter } from "next/navigation";
 import CategoryManager from "@/app/Components/CategoryManager";
+import AdminAccessChecker from "@/app/Components/AdminPanel/AdminAccessChecker";
 
 const SidebarLink = ({
   icon: Icon,
@@ -56,19 +57,6 @@ export default function CategoriesManagementPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showCategoryManager, setShowCategoryManager] = useState(true);
 
-  // Check authentication and admin role
-  useEffect(() => {
-    if (!user) {
-      router.push("/LoginPage");
-      return;
-    }
-
-    if (!user.roles?.includes("ADMIN")) {
-      router.push("/DashboardPage");
-      return;
-    }
-  }, [user, router]);
-
   const handleLogout = () => {
     logout();
     router.push("/");
@@ -97,7 +85,7 @@ export default function CategoriesManagementPage() {
       href: "/admin/products",
     },
     {
-      icon: FiBarChart3,
+      icon: FiBarChart,
       label: "گزارشات",
       href: "/admin/reports",
     },
@@ -108,19 +96,9 @@ export default function CategoriesManagementPage() {
     },
   ];
 
-  if (!user || !user.roles?.includes("ADMIN")) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 font-[var(--font-yekan)]">در حال بررسی دسترسی...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50">
+    <AdminAccessChecker>
+      <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <motion.div
@@ -278,6 +256,6 @@ export default function CategoriesManagementPage() {
           />
         </main>
       </div>
-    </div>
+    </AdminAccessChecker>
   );
 }

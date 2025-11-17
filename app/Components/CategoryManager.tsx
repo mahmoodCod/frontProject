@@ -362,7 +362,7 @@ export default function CategoryManager({ isOpen, onClose }: CategoryManagerProp
                 maxLength={70}
               />
               <p className="text-xs text-gray-500 mt-1">
-                {formData["seo.metaTitle"].length}/70 کاراکتر
+                {formData["seo.metaTitle"]?.length || 0}/70 کاراکتر
               </p>
             </div>
 
@@ -379,7 +379,7 @@ export default function CategoryManager({ isOpen, onClose }: CategoryManagerProp
                 maxLength={160}
               />
               <p className="text-xs text-gray-500 mt-1">
-                {formData["seo.metaDescription"].length}/160 کاراکتر
+                {formData["seo.metaDescription"]?.length || 0}/160 کاراکتر
               </p>
             </div>
 
@@ -389,7 +389,7 @@ export default function CategoryManager({ isOpen, onClose }: CategoryManagerProp
               </label>
               <input
                 type="text"
-                value={formData["seo.metaKeywords"].join(', ')}
+                value={formData["seo.metaKeywords"]?.join(', ') || ''}
                 onChange={(e) => updateSEOField('metaKeywords', e.target.value.split(',').map(k => k.trim()))}
                 className="w-full px-4 py-2 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                 placeholder="قهوه, اسپرسو, قهوه تازه"
@@ -428,9 +428,7 @@ export default function CategoryManager({ isOpen, onClose }: CategoryManagerProp
     );
   };
 
-  if (!isAdmin) {
-    return null;
-  }
+  // Note: Admin role checking is now handled by AdminAccessChecker in parent component
 
   return (
     <AnimatePresence>
