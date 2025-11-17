@@ -1,24 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# آی‌کسب (AI-KSEB) - فروشگاه آنلاین با دستیار هوش مصنوعی
 
-## Getting Started
+فروشگاه آنلاین قهوه با امکانات کامل مدیریت دسته‌بندی‌ها، محصولات و سفارشات.
 
-First, run the development server:
+## 🚀 ویژگی‌ها
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **مدیریت دسته‌بندی‌های هوشمند**: سیستم کامل CRUD برای دسته‌بندی‌های سلسله مراتبی
+- **رابط کاربری مدرن**: طراحی زیبا با Framer Motion و Tailwind CSS
+- **پنل مدیریت ادمین**: مدیریت کامل دسته‌بندی‌ها با رابط گرافیکی
+- **Authentication**: سیستم ورود و ثبت‌نام با OTP
+- **سبد خرید**: مدیریت سبد خرید و سفارشات
+- **Responsive Design**: سازگار با موبایل و دسکتاپ
+
+## 📚 API Category Documentation
+
+### Base URL
+```
+/api/v1/category
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Authentication
+برخی endpointها نیاز به authentication دارند (Admin Only):
+- **Header**: `Authorization: Bearer <token>`
+- **Role**: نقش `ADMIN` الزامی
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Available Endpoints
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+#### Public Endpoints
+- `GET /api/v1/category/tree` - دریافت درخت دسته‌بندی‌ها
+- `GET /api/v1/category/featured` - دریافت دسته‌بندی‌های ویژه
+- `GET /api/v1/category/root` - دریافت دسته‌بندی‌های ریشه
+- `GET /api/v1/category/:id/subcategories` - دریافت زیردسته‌بندی‌ها
+
+#### Admin Endpoints
+- `GET /api/v1/category` - لیست دسته‌بندی‌ها (با فیلتر و pagination)
+- `POST /api/v1/category` - ایجاد دسته‌بندی جدید
+- `PUT /api/v1/category/:id` - به‌روزرسانی دسته‌بندی
+- `DELETE /api/v1/category/:id` - حذف دسته‌بندی
+- `PUT /api/v1/category/:id/status` - تغییر وضعیت دسته‌بندی
+- `PUT /api/v1/category/:id/order` - تغییر ترتیب دسته‌بندی
+
+### Frontend Integration
+
+```typescript
+import {
+  useCategories,
+  useCategoryTree,
+  useFeaturedCategories,
+  useCategoryMutation
+} from '@/services';
+
+// استفاده در کامپوننت‌ها
+const { categories, loading } = useCategoryTree();
+const { create, update, remove } = useCategoryMutation();
+```
+
+## 🛠️ تکنولوژی‌ها
+
+- **Frontend**: Next.js 16, React 19, TypeScript
+- **Styling**: Tailwind CSS, Framer Motion
+- **State Management**: React Context
+- **Icons**: React Icons, Lucide React
+- **HTTP Client**: Fetch API (با wrapper سفارشی)
+
+## 🏃‍♂️ شروع کار
+
+1. **کلون کردن پروژه**:
+```bash
+git clone <repository-url>
+cd frontProject
+```
+
+2. **نصب وابستگی‌ها**:
+```bash
+npm install
+```
+
+3. **تنظیم متغیرهای محیطی**:
+```bash
+# .env.local
+NEXT_PUBLIC_API_BASE_URL=https://your-api-url.com
+```
+
+4. **اجرای پروژه**:
+```bash
+npm run dev
+```
+
+5. **باز کردن مرورگر**:
+```
+http://localhost:3000
+```
 
 ## Learn More
 

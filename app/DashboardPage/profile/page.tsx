@@ -78,7 +78,10 @@ export default function ProfilePage() {
   
   // Parse the full name from user data
   const getUserFullName = () => {
-    return user?.name || "";
+    if (user?.firstName && user?.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    return user?.firstName || user?.lastName || "";
   };
 
   // State for form fields - only name (combined first + last) and username
@@ -95,8 +98,9 @@ export default function ProfilePage() {
 
   // Get user's display name for sidebar
   const getUserDisplayName = () => {
-    if (user?.name) {
-      return user.name;
+    const fullName = getUserFullName();
+    if (fullName) {
+      return fullName;
     }
     return user?.phone || "کاربر";
   };

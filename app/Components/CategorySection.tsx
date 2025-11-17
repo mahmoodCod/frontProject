@@ -2,30 +2,39 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { useFeaturedCategories, useCategoryTree } from "@/services";
 
 export default function CategorySection() {
+  const { categories: featuredCategories, loading: featuredLoading } = useFeaturedCategories();
+  const { categories: treeCategories, loading: treeLoading } = useCategoryTree();
+
+  // Transform API data to component format
   const categories = [
     {
       id: 1,
-      title: "نوشیدنی خودت رو بخر",
-      items: ["قهوه اسپرسو", "قهوه ترک", "قهوه عربیکا", "قهوه فوری"],
+      title: "دسته‌بندی‌های ویژه",
+      items: featuredCategories.slice(0, 4).map(cat => cat.name),
+      apiData: featuredCategories.slice(0, 4),
     },
     {
       id: 2,
-      title: "محصولات ویژه",
-      items: ["قهوه برزیل", "قهوه کلمبیا", "قهوه کنیا", "قهوه ترکیبی"],
-    },
-    {
-      id: 3,
-      title: "تجهیزات دم‌آوری",
-      items: ["فرنچ‌پرس", "موکاپات", "آسیاب قهوه", "پورتافیلتر"],
-    },
-    {
-      id: 4,
-      title: "دانه‌های خاص",
-      items: ["بلو مانتین", "گواتمالا", "اتیوپی", "کاستاریکا"],
+      title: "دسته‌بندی‌های اصلی",
+      items: treeCategories.slice(0, 4).map(cat => cat.name),
+      apiData: treeCategories.slice(0, 4),
     },
   ];
+
+  // Show loading state
+  if (featuredLoading || treeLoading) {
+    return (
+      <section className="w-full bg-gradient-to-b from-amber-50/50 to-white py-16 px-4 md:px-10 lg:px-20">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 font-[var(--font-yekan)]">در حال بارگذاری دسته‌بندی‌ها...</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="w-full bg-gradient-to-b from-amber-50/50 to-white py-16 px-4 md:px-10 lg:px-20">
